@@ -22,3 +22,7 @@ preferences/sessions/
 sessions/
 seessions/
 mturk_pref/preferences/sessions/
+mturk_pref/*.db
+mturk_pref/*.db-wal
+mturk_pref/*.db-shm
+_extra_chunks_pruned_*/
