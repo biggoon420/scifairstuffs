@@ -121,6 +121,7 @@ def _read_json(p: Path) -> Any:
 
 CONFIG_SOURCE_PATH = ""
 
+
 def load_settings() -> Settings:
     env = os.getenv("MTURK_PREF_CONFIG", "").strip()
     candidates: List[Path] = []
@@ -244,10 +245,12 @@ def _chunks_list_for_file(file_id: str, manifest: Any) -> List[str]:
     if isinstance(chunks, list):
         return [str(x) for x in chunks]
     if isinstance(chunks, dict):
+
         def _key_sort(x: Any) -> Tuple[int, str]:
             s = str(x)
             m = re.findall(r"\d+", s)
             return (int(m[-1]) if m else 10**9, s)
+
         keys = sorted(chunks.keys(), key=_key_sort)
         return [str(chunks[k]) for k in keys]
     raise RuntimeError(f"chunks field for {file_id} must be list or dict, got {type(chunks)}")
@@ -372,6 +375,7 @@ def _db_init(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE sessions ADD COLUMN turk_submit_to TEXT")
         conn.commit()
 
+
 def _meta_get(conn: sqlite3.Connection, k: str, default: str) -> str:
     cur = conn.execute("SELECT v FROM meta WHERE k=?", (k,))
     row = cur.fetchone()
@@ -384,6 +388,7 @@ def _meta_set(conn: sqlite3.Connection, k: str, v: str) -> None:
     conn.execute("INSERT INTO meta(k,v) VALUES(?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v", (k, v))
     conn.commit()
 
+
 def _log_event(kind: str, session_id: str, detail: str) -> None:
     try:
         DB.execute(
@@ -393,7 +398,6 @@ def _log_event(kind: str, session_id: str, detail: str) -> None:
         DB.commit()
     except Exception:
         pass
-
 
 
 def _session_csv_path(settings: Settings, session_id: str) -> Path:
@@ -1271,10 +1275,20 @@ def api_skip(req: SkipReq) -> JSONResponse:
 
     if votes_done >= required_votes:
         payload = _payload(
-            SETTINGS, MANIFEST, len(PAIRS),
-            session_id, assignment_id, worker_id, hit_id, turk_submit_to,
-            required_votes, votes_done, presented, st,
-            msg=msg0, finished=True
+            SETTINGS,
+            MANIFEST,
+            len(PAIRS),
+            session_id,
+            assignment_id,
+            worker_id,
+            hit_id,
+            turk_submit_to,
+            required_votes,
+            votes_done,
+            presented,
+            st,
+            msg=msg0,
+            finished=True,
         )
         return JSONResponse(payload)
 
@@ -1288,7 +1302,7 @@ def api_skip(req: SkipReq) -> JSONResponse:
             _log_event("session", session_id, f"assignment={assignment_id} worker={worker_id} hit={hit_id}")
         except Exception:
             pass
-            raise HTTPException(400, "side must be A or B")
+        raise HTTPException(400, "side must be A or B")
 
     a_list = MANIFEST[st.a_file]
     b_list = MANIFEST[st.b_file]
@@ -1358,6 +1372,7 @@ def api_skip(req: SkipReq) -> JSONResponse:
     )
     return JSONResponse(payload)
 
+
 @app.post("/api/vote", response_class=JSONResponse)
 def api_vote(req: VoteReq) -> JSONResponse:
     session_id = (req.session_id or "").strip()
@@ -1369,15 +1384,30 @@ def api_vote(req: VoteReq) -> JSONResponse:
     st, local_index, msg0 = _repair_state(slot, local_index, st)
 
     if votes_done >= required_votes:
-        payload = _payload(SETTINGS, MANIFEST, len(PAIRS), session_id, assignment_id, worker_id, hit_id, turk_submit_to, required_votes, votes_done, presented, st, msg=msg0, finished=True)
+        payload = _payload(
+            SETTINGS,
+            MANIFEST,
+            len(PAIRS),
+            session_id,
+            assignment_id,
+            worker_id,
+            hit_id,
+            turk_submit_to,
+            required_votes,
+            votes_done,
+            presented,
+            st,
+            msg=msg0,
+            finished=True,
+        )
         return JSONResponse(payload)
 
     winner = int(req.winner)
     if winner not in (1, 2):
         try:
             _log_event("vote", session_id, f"winner={winner}")
-    except Exception:
-        pass
+        except Exception:
+            pass
         raise HTTPException(400, "winner must be 1 (A) or 2 (B)")
 
     a_list = MANIFEST[st.a_file]
@@ -1542,14 +1572,16 @@ def api_download_all_zip(background_tasks: BackgroundTasks, token: str = Query(d
     background_tasks.add_task(_cleanup_file, tmp_path)
     return FileResponse(tmp_path, media_type="application/zip", filename="sessions.zip")
 
+
 from typing import Any
+
 
 @app.get("/api/debug", response_class=JSONResponse)
 def api_debug(token: str = Query(default="")) -> JSONResponse:
     _require_admin_token(token)
     keys = list(MANIFEST.keys())
     has_0908_manifest = any("speech_0908" in k for k in keys)
-    has_0908_pairs = any(("speech_0908" in a) or ("speech_0908" in b) for a,b in PAIRS)
+    has_0908_pairs = any(("speech_0908" in a) or ("speech_0908" in b) for a, b in PAIRS)
     return JSONResponse(
         {
             "ok": True,
@@ -1565,6 +1597,7 @@ def api_debug(token: str = Query(default="")) -> JSONResponse:
             "pairs_head": PAIRS[:10],
         }
     )
+
 
 @app.post("/api/admin/wipe", response_class=JSONResponse)
 def api_admin_wipe(
@@ -1646,7 +1679,9 @@ def api_config_debug(token: str = Query(default="")) -> JSONResponse:
     )
 
 
-__EVENTS_ENDPOINT_V1__
+"__EVENTS_ENDPOINT_V1__"
+
+
 @app.get("/api/events", response_class=JSONResponse)
 def api_events(token: str = Query(default=""), limit: int = Query(default=200)) -> JSONResponse:
     _require_admin_token(token)
@@ -1669,7 +1704,9 @@ def api_events(token: str = Query(default=""), limit: int = Query(default=200)) 
     return JSONResponse({"ok": True, "count": len(out), "events": out})
 
 
-__SESSIONS_DB_ENDPOINT_V1__
+"__SESSIONS_DB_ENDPOINT_V1__"
+
+
 @app.get("/api/sessions_db", response_class=JSONResponse)
 def api_sessions_db(token: str = Query(default=""), limit: int = Query(default=200)) -> JSONResponse:
     _require_admin_token(token)
