@@ -5,6 +5,6 @@
   "db_path": "mturk_pref.sqlite",
   "output_sessions_dir": "preferences/sessions",
   "sessions_meta_path": "preferences/sessions_meta.json",
-  "comparisons_per_worker": 100,
+  "comparisons_per_worker": 15,
   "reclaim_minutes": 120
 }
