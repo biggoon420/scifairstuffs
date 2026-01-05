@@ -995,6 +995,11 @@ def _html() -> str:
 
   async function start(){
     try{
+      if(preview){
+        err.textContent = "Preview mode: accept the HIT to begin.";
+        setEnabled(false);
+        return;
+      }
       const url = new URL("/api/session", window.location.origin);
       if(assignmentId) url.searchParams.set("assignmentId", assignmentId);
       if(workerId) url.searchParams.set("workerId", workerId);
@@ -1004,10 +1009,6 @@ def _html() -> str:
 
       const st = await api(url.toString(), { method:"GET" });
       updateUI(st);
-
-      if(preview){
-        err.textContent = "Preview mode: accept the HIT to begin.";
-      }
     }catch(e){
       err.textContent = "Error: " + e.message;
       setEnabled(false);
