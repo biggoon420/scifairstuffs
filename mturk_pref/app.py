@@ -355,7 +355,19 @@ def _db_init(conn: sqlite3.Connection) -> None:
         )
         """
     )
-    conn.commit()
+    
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts REAL NOT NULL,
+            session_id TEXT,
+            kind TEXT NOT NULL,
+            detail TEXT NOT NULL
+        )
+        """
+    )
+conn.commit()
     cols = _db_columns(conn, "sessions")
     if "turk_submit_to" not in cols:
         conn.execute("ALTER TABLE sessions ADD COLUMN turk_submit_to TEXT")
@@ -373,6 +385,17 @@ def _meta_get(conn: sqlite3.Connection, k: str, default: str) -> str:
 def _meta_set(conn: sqlite3.Connection, k: str, v: str) -> None:
     conn.execute("INSERT INTO meta(k,v) VALUES(?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v", (k, v))
     conn.commit()
+
+def _log_event(kind: str, session_id: str, detail: str) -> None:
+    try:
+        DB.execute(
+            "INSERT INTO events(ts, session_id, kind, detail) VALUES(?,?,?,?)",
+            (_now(), str(session_id or ""), str(kind or ""), str(detail or "")[:2000]),
+        )
+        DB.commit()
+    except Exception:
+        pass
+
 
 
 def _session_csv_path(settings: Settings, session_id: str) -> Path:
@@ -1259,6 +1282,14 @@ def api_skip(req: SkipReq) -> JSONResponse:
 
     side = (req.side or "").strip().upper()
     if side not in ("A", "B"):
+    try:
+        _log_event("skip", session_id, f"side={side}")
+    except Exception:
+        pass
+    try:
+        _log_event("session", session_id, f"assignment={assignment_id} worker={worker_id} hit={hit_id}")
+    except Exception:
+        pass
         raise HTTPException(400, "side must be A or B")
 
     a_list = MANIFEST[st.a_file]
@@ -1345,6 +1376,10 @@ def api_vote(req: VoteReq) -> JSONResponse:
 
     winner = int(req.winner)
     if winner not in (1, 2):
+    try:
+        _log_event("vote", session_id, f"winner={winner}")
+    except Exception:
+        pass
         raise HTTPException(400, "winner must be 1 (A) or 2 (B)")
 
     a_list = MANIFEST[st.a_file]
@@ -1611,3 +1646,52 @@ def api_config_debug(token: str = Query(default="")) -> JSONResponse:
             "candidates": out,
         }
     )
+
+
+__EVENTS_ENDPOINT_V1__
+@app.get("/api/events", response_class=JSONResponse)
+def api_events(token: str = Query(default=""), limit: int = Query(default=200)) -> JSONResponse:
+    _require_admin_token(token)
+    lim = max(1, min(2000, int(limit)))
+    cur = DB.execute(
+        "SELECT ts, session_id, kind, detail FROM events ORDER BY ts DESC LIMIT ?",
+        (lim,),
+    )
+    rows = cur.fetchall()
+    out = []
+    for ts, sid, kind, detail in rows:
+        out.append(
+            {
+                "ts": float(ts),
+                "session_id": str(sid or ""),
+                "kind": str(kind or ""),
+                "detail": str(detail or ""),
+            }
+        )
+    return JSONResponse({"ok": True, "count": len(out), "events": out})
+
+
+__SESSIONS_DB_ENDPOINT_V1__
+@app.get("/api/sessions_db", response_class=JSONResponse)
+def api_sessions_db(token: str = Query(default=""), limit: int = Query(default=200)) -> JSONResponse:
+    _require_admin_token(token)
+    lim = max(1, min(2000, int(limit)))
+    cur = DB.execute(
+        "SELECT session_id, updated_ts, votes_done, required_votes, worker_id, assignment_id, hit_id FROM sessions ORDER BY updated_ts DESC LIMIT ?",
+        (lim,),
+    )
+    rows = cur.fetchall()
+    out = []
+    for sid, uts, vd, rv, wid, aid, hid in rows:
+        out.append(
+            {
+                "session_id": str(sid or ""),
+                "updated_ts": float(uts),
+                "votes_done": int(vd or 0),
+                "required_votes": int(rv or 0),
+                "worker_id": str(wid or ""),
+                "assignment_id": str(aid or ""),
+                "hit_id": str(hid or ""),
+            }
+        )
+    return JSONResponse({"ok": True, "count": len(out), "sessions": out})
