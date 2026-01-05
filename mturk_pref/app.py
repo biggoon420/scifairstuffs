@@ -1374,8 +1374,8 @@ def api_vote(req: VoteReq) -> JSONResponse:
 
     winner = int(req.winner)
     if winner not in (1, 2):
-    try:
-        _log_event("vote", session_id, f"winner={winner}")
+        try:
+            _log_event("vote", session_id, f"winner={winner}")
     except Exception:
         pass
         raise HTTPException(400, "winner must be 1 (A) or 2 (B)")
