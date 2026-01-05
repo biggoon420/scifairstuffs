@@ -1498,3 +1498,77 @@ def api_download_all_zip(background_tasks: BackgroundTasks, token: str = Query(d
 
     background_tasks.add_task(_cleanup_file, tmp_path)
     return FileResponse(tmp_path, media_type="application/zip", filename="sessions.zip")
+
+from typing import Any
+
+@app.get("/api/debug", response_class=JSONResponse)
+def api_debug(token: str = Query(default="")) -> JSONResponse:
+    _require_admin_token(token)
+    keys = list(MANIFEST.keys())
+    has_0908_manifest = any("speech_0908" in k for k in keys)
+    has_0908_pairs = any(("speech_0908" in a) or ("speech_0908" in b) for a,b in PAIRS)
+    return JSONResponse(
+        {
+            "ok": True,
+            "data_root": str(_data_root()),
+            "db_path": SETTINGS.db_path,
+            "output_sessions_dir": SETTINGS.output_sessions_dir,
+            "manifest_files": len(MANIFEST),
+            "pairs_total": len(PAIRS),
+            "dropped_pairs": DROPPED_PAIR_COUNT,
+            "has_speech_0908_in_manifest": has_0908_manifest,
+            "has_speech_0908_in_pairs": has_0908_pairs,
+            "manifest_head": keys[:10],
+            "pairs_head": PAIRS[:10],
+        }
+    )
+
+@app.post("/api/admin/wipe", response_class=JSONResponse)
+def api_admin_wipe(
+    token: str = Query(default=""),
+    delete_csv: int = Query(default=1),
+    reset_db: int = Query(default=1),
+) -> JSONResponse:
+    _require_admin_token(token)
+    global DB
+
+    deleted = 0
+    root = Path(SETTINGS.output_sessions_dir)
+    root.mkdir(parents=True, exist_ok=True)
+
+    if int(delete_csv) == 1:
+        for fp in root.glob("*.csv"):
+            try:
+                fp.unlink()
+                deleted += 1
+            except Exception:
+                pass
+
+    if int(reset_db) == 1:
+        try:
+            DB.close()
+        except Exception:
+            pass
+
+        dbp = Path(SETTINGS.db_path)
+        for ext in ("", "-wal", "-shm"):
+            try:
+                Path(str(dbp) + ext).unlink(missing_ok=True)
+            except Exception:
+                pass
+
+        DB = _db_connect(SETTINGS.db_path)
+        _db_init(DB)
+    else:
+        DB.execute("DELETE FROM sessions")
+        DB.execute("DELETE FROM meta")
+        DB.commit()
+
+    return JSONResponse(
+        {
+            "ok": True,
+            "deleted_csv": deleted,
+            "db_path": SETTINGS.db_path,
+            "output_sessions_dir": str(root),
+        }
+    )
