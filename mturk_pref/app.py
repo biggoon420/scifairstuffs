@@ -1206,6 +1206,11 @@ def api_session(
         DB.commit()
 
     session_id, slot, required_votes, votes_done, presented, local_index, st, csvp, worker_id, assignment_id, hit_id, turk_submit_to = _load_session(session_id)
+    current_required = int(SETTINGS.comparisons_per_worker)
+    if required_votes != current_required:
+        DB.execute("UPDATE sessions SET required_votes=? WHERE session_id=?", (current_required, session_id))
+        DB.commit()
+        required_votes = current_required
     st, local_index, msg = _repair_state(slot, local_index, st)
     _save_session(session_id, votes_done, presented, local_index, st)
 
