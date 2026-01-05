@@ -1280,15 +1280,15 @@ def api_skip(req: SkipReq) -> JSONResponse:
 
     side = (req.side or "").strip().upper()
     if side not in ("A", "B"):
-    try:
-        _log_event("skip", session_id, f"side={side}")
-    except Exception:
-        pass
-    try:
-        _log_event("session", session_id, f"assignment={assignment_id} worker={worker_id} hit={hit_id}")
-    except Exception:
-        pass
-        raise HTTPException(400, "side must be A or B")
+        try:
+            _log_event("skip", session_id, f"side={side}")
+        except Exception:
+            pass
+        try:
+            _log_event("session", session_id, f"assignment={assignment_id} worker={worker_id} hit={hit_id}")
+        except Exception:
+            pass
+            raise HTTPException(400, "side must be A or B")
 
     a_list = MANIFEST[st.a_file]
     b_list = MANIFEST[st.b_file]
