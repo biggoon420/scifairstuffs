@@ -355,7 +355,6 @@ def _db_init(conn: sqlite3.Connection) -> None:
         )
         """
     )
-    
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS events (
@@ -367,12 +366,11 @@ def _db_init(conn: sqlite3.Connection) -> None:
         )
         """
     )
-conn.commit()
+    conn.commit()
     cols = _db_columns(conn, "sessions")
     if "turk_submit_to" not in cols:
         conn.execute("ALTER TABLE sessions ADD COLUMN turk_submit_to TEXT")
         conn.commit()
-
 
 def _meta_get(conn: sqlite3.Connection, k: str, default: str) -> str:
     cur = conn.execute("SELECT v FROM meta WHERE k=?", (k,))
