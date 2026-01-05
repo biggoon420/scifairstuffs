@@ -119,6 +119,8 @@ def _read_json(p: Path) -> Any:
         raise RuntimeError(f"Invalid JSON in {p.as_posix()}: could not parse") from e
 
 
+CONFIG_SOURCE_PATH = ""
+
 def load_settings() -> Settings:
     env = os.getenv("MTURK_PREF_CONFIG", "").strip()
     candidates: List[Path] = []
@@ -137,6 +139,8 @@ def load_settings() -> Settings:
                 data = _read_json(c)
                 if not isinstance(data, dict):
                     raise RuntimeError(f"Config file {c.as_posix()} must be a JSON object.")
+                global CONFIG_SOURCE_PATH
+                CONFIG_SOURCE_PATH = c.as_posix()
                 return Settings(**data)
             except Exception as e:
                 last_err = e
@@ -1576,5 +1580,34 @@ def api_admin_wipe(
             "deleted_csv": deleted,
             "db_path": SETTINGS.db_path,
             "output_sessions_dir": str(root),
+        }
+    )
+
+
+@app.get("/api/config_debug", response_class=JSONResponse)
+def api_config_debug(token: str = Query(default="")) -> JSONResponse:
+    _require_admin_token(token)
+    env_cfg = os.getenv("MTURK_PREF_CONFIG", "").strip()
+    cands = [
+        env_cfg,
+        "mturk_pref/config.json",
+        "mturk_pref/settings.json",
+        "config.json",
+        "settings.json",
+    ]
+    out = []
+    for c in cands:
+        if not c:
+            continue
+        cp = Path(c)
+        out.append({"path": c, "exists": cp.exists()})
+    return JSONResponse(
+        {
+            "ok": True,
+            "mturk_pref_config_env": env_cfg,
+            "config_source_path": CONFIG_SOURCE_PATH,
+            "comparisons_per_worker": int(SETTINGS.comparisons_per_worker),
+            "total_comparisons": int(SETTINGS.total_comparisons) if SETTINGS.total_comparisons is not None else None,
+            "candidates": out,
         }
     )
