@@ -1,0 +1,10 @@
+{
+  "chunks_base_url": "https://chunkdatascifair.s3.us-east-2.amazonaws.com/chunks/",
+  "manifest_path": "mturk_pref/manifest.json",
+  "pair_schedule_path": "mturk_pref/pair_schedule.csv",
+  "db_path": "mturk_pref.sqlite",
+  "output_sessions_dir": "preferences/sessions",
+  "sessions_meta_path": "preferences/sessions_meta.json",
+  "comparisons_per_worker": 100,
+  "reclaim_minutes": 120
+}

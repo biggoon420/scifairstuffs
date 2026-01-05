@@ -1,0 +1,12 @@
+PAIR QUEUE DEBUG
+========================================
+Session: 250
+Completed: 0/5000
+Queue used: 0
+Queued items: 5
+
+>> NEXT <<  A=sample030_9732143a (8/12)  vs  B=sample117_4997d25a (7/12)
+02  A=sample216_ffa6ee05 (10/12)  vs  B=sample239_70abef06 (2/3)
+03  A=sample191_3361e30f (3/3)  vs  B=sample250_3e02512d (4/7)
+04  A=sample223_e7455493 (3/4)  vs  B=sample171_02b13e1c (1/12)
+05  A=sample173_2377df9e (3/3)  vs  B=sample151_0c634082 (1/3)

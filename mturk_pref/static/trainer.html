@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Audio Preference Trainer</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <div class="title">Audio Preference Trainer</div>
+        <div id="status" class="status"></div>
+
+        <div class="row">
+          <div class="col">
+            <div class="label">A</div>
+            <audio id="audioA" preload="auto"></audio>
+            <button id="playA" class="btn">▶ Play A</button>
+            <button id="skipA" class="btn alt">Skip A Chunk</button>
+          </div>
+          <div class="col">
+            <div class="label">B</div>
+            <audio id="audioB" preload="auto"></audio>
+            <button id="playB" class="btn">▶ Play B</button>
+            <button id="skipB" class="btn alt">Skip B Chunk</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="voteA" class="btn big">A IS BETTER</button>
+          <button id="voteB" class="btn big">B IS BETTER</button>
+        </div>
+
+        <div id="pairInfo" class="pair"></div>
+        <div id="progress" class="progress"></div>
+
+        <div id="finish" class="finish hidden">
+          <div class="done">Done.</div>
+          <div class="code">Completion code: <span id="code"></span></div>
+          <form id="submitForm" method="POST">
+            <input type="hidden" name="assignmentId" id="assignmentIdField" />
+            <input type="hidden" name="completionCode" id="completionCodeField" />
+            <button type="submit" class="btn big">Submit to MTurk</button>
+          </form>
+          <div id="noSubmit" class="small hidden"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
+
