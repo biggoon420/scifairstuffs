@@ -1,12 +1,12 @@
 PAIR QUEUE DEBUG
 ========================================
-Session: 250
-Completed: 0/5000
+Session: 777
+Completed: 0/777
 Queue used: 0
 Queued items: 5
 
->> NEXT <<  A=sample030_9732143a (8/12)  vs  B=sample117_4997d25a (7/12)
-02  A=sample216_ffa6ee05 (10/12)  vs  B=sample239_70abef06 (2/3)
-03  A=sample191_3361e30f (3/3)  vs  B=sample250_3e02512d (4/7)
-04  A=sample223_e7455493 (3/4)  vs  B=sample171_02b13e1c (1/12)
-05  A=sample173_2377df9e (3/3)  vs  B=sample151_0c634082 (1/3)
+>> NEXT <<  A=Toastmasters_Table_Topics_Contest_Wendy_Fedoruk_670196a3 (2/3)  vs  B=Advice_to_my_12_year_old_self_-_Impromptu_Speech_by_Geoff_Peters_m1sqCsIG-Hg_38e1d97f (2/3)
+02  A=3_Minute_Thesis_3MT_at_Stanford_University_2025_Tamri_Matiashvili_2nd_Place_Winner_c8GEpWd3g_8_d6842192 (1/3)  vs  B=2016_University_of_Waterloo_3MT_first_prize_winner_Gah-Jone_Won_XrflFPDbD98_6cde44ba (2/3)
+03  A=3-Minute_Thesis_Competition_2018_2nd_Place_Winner_Lydia_Hoffstaetter_avFcgo0qZZs_5a5ff948 (3/4)  vs  B=Toastmasters_Table_Topics_Contest_Wendy_Fedoruk_670196a3 (2/3)
+04  A=2014_Three_Minute_Thesis_winning_presentation_by_Emily_Johnston_dh0pJdgY6Lc_136f74ef (1/3)  vs  B=FAU_2016_3MT_Three_Minute_Thesis_Championship_Second_Runner-Up_-_Keith_Murphy_v3yKou7uJAc_65dd0189 (3/3)
+05  A=Three_Minute_Thesis_competition_2018_Winner_-_Willemijn_Doedens_7YesMSG9izE_7aeb4131 (3/3)  vs  B=00015_-_Karthik_Raj_-_Table_Topics_contestant_b5e0b6a4 (1/3)
