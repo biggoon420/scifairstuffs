@@ -2923,16 +2923,24 @@
     },
     "sample249_0f903701": {
       "chunks": [
-        "chunks/sample249_0f903701/chunk_01_of_03.mp3",
-        "chunks/sample249_0f903701/chunk_02_of_03.mp3",
-        "chunks/sample249_0f903701/chunk_03_of_03.mp3"
+        "chunks/sample249_0f903701/chunk_01_of_07.mp3",
+        "chunks/sample249_0f903701/chunk_02_of_07.mp3",
+        "chunks/sample249_0f903701/chunk_03_of_07.mp3",
+        "chunks/sample249_0f903701/chunk_04_of_07.mp3",
+        "chunks/sample249_0f903701/chunk_05_of_07.mp3",
+        "chunks/sample249_0f903701/chunk_06_of_07.mp3",
+        "chunks/sample249_0f903701/chunk_07_of_07.mp3"
       ]
     },
     "sample250_7263063c": {
       "chunks": [
-        "chunks/sample250_7263063c/chunk_01_of_03.mp3",
-        "chunks/sample250_7263063c/chunk_02_of_03.mp3",
-        "chunks/sample250_7263063c/chunk_03_of_03.mp3"
+        "chunks/sample250_7263063c/chunk_01_of_07.mp3",
+        "chunks/sample250_7263063c/chunk_02_of_07.mp3",
+        "chunks/sample250_7263063c/chunk_03_of_07.mp3",
+        "chunks/sample250_7263063c/chunk_04_of_07.mp3",
+        "chunks/sample250_7263063c/chunk_05_of_07.mp3",
+        "chunks/sample250_7263063c/chunk_06_of_07.mp3",
+        "chunks/sample250_7263063c/chunk_07_of_07.mp3"
       ]
     }
   }
