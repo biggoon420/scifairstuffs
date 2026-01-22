@@ -2920,6 +2920,20 @@
         "chunks/sample248_79b27f7d/chunk_05_of_06.mp3",
         "chunks/sample248_79b27f7d/chunk_06_of_06.mp3"
       ]
+    },
+    "sample249_0f903701": {
+      "chunks": [
+        "chunks/sample249_0f903701/chunk_01_of_03.mp3",
+        "chunks/sample249_0f903701/chunk_02_of_03.mp3",
+        "chunks/sample249_0f903701/chunk_03_of_03.mp3"
+      ]
+    },
+    "sample250_7263063c": {
+      "chunks": [
+        "chunks/sample250_7263063c/chunk_01_of_03.mp3",
+        "chunks/sample250_7263063c/chunk_02_of_03.mp3",
+        "chunks/sample250_7263063c/chunk_03_of_03.mp3"
+      ]
     }
   }
 }
