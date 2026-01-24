@@ -7,7 +7,7 @@ Outputs:
   preferences/sessions/<session_id>.csv
 
 CSV schema:
-  a_file,a_chunk_idx,a_chunk_total,b_file,b_chunk_idx,b_chunk_total,winner,replacement
+  a_file,a_chunk_idx,a_chunk_total,b_file,b_chunk_idx,b_chunk_total,winner,replacement,a_listen_ms,b_listen_ms,a_play_count,b_play_count
 
 winner:
   1 = A better
@@ -33,6 +33,8 @@ import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import mimetypes
+from fastapi.staticfiles import StaticFiles
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
@@ -67,11 +69,19 @@ class ComparisonState:
 class SkipReq(BaseModel):
     session_id: str
     side: str
+    a_listen_ms: int = 0
+    b_listen_ms: int = 0
+    a_play_count: int = 0
+    b_play_count: int = 0
 
 
 class VoteReq(BaseModel):
     session_id: str
     winner: int
+    a_listen_ms: int = 0
+    b_listen_ms: int = 0
+    a_play_count: int = 0
+    b_play_count: int = 0
 
 
 def _now() -> float:
@@ -413,7 +423,7 @@ def _write_csv_header_if_missing(p: Path) -> None:
     _ensure_parent(p)
     with p.open("w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["a_file", "a_chunk_idx", "a_chunk_total", "b_file", "b_chunk_idx", "b_chunk_total", "winner", "replacement"])
+        w.writerow(["a_file", "a_chunk_idx", "a_chunk_total", "b_file", "b_chunk_idx", "b_chunk_total", "winner", "replacement", "a_listen_ms", "b_listen_ms", "a_play_count", "b_play_count"])
 
 
 def _append_row(
@@ -426,11 +436,15 @@ def _append_row(
     b_total: int,
     winner: int,
     replacement: str,
+    a_listen_ms: int,
+    b_listen_ms: int,
+    a_play_count: int,
+    b_play_count: int,
 ) -> None:
     _write_csv_header_if_missing(p)
     with p.open("a", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
-        w.writerow([a_file, a_idx_1based, a_total, b_file, b_idx_1based, b_total, winner, replacement])
+        w.writerow([a_file, a_idx_1based, a_total, b_file, b_idx_1based, b_total, winner, replacement, int(a_listen_ms), int(b_listen_ms), int(a_play_count), int(b_play_count)])
 
 
 def _session_id_from_params(
@@ -922,11 +936,75 @@ def _html() -> str:
 
   let STATE = null;
 
+  let LISTEN = {
+    a_play_count: 0,
+    b_play_count: 0,
+    a_listen_ms: 0,
+    b_listen_ms: 0,
+    a_started: null,
+    b_started: null,
+  };
+
+  function nowMs(){ return performance.now(); }
+
+  function stopSide(side){
+    const t = nowMs();
+    if(side === "A"){
+      if(LISTEN.a_started !== null){
+        LISTEN.a_listen_ms += (t - LISTEN.a_started);
+        LISTEN.a_started = null;
+      }
+    }else{
+      if(LISTEN.b_started !== null){
+        LISTEN.b_listen_ms += (t - LISTEN.b_started);
+        LISTEN.b_started = null;
+      }
+    }
+  }
+
+  function resetListen(){
+    stopSide("A");
+    stopSide("B");
+    LISTEN.a_play_count = 0;
+    LISTEN.b_play_count = 0;
+    LISTEN.a_listen_ms = 0;
+    LISTEN.b_listen_ms = 0;
+    LISTEN.a_started = null;
+    LISTEN.b_started = null;
+    updateVoteGate();
+  }
+
+  function listenPayload(){
+    const t = nowMs();
+    const a_ms = LISTEN.a_listen_ms + (LISTEN.a_started !== null ? (t - LISTEN.a_started) : 0);
+    const b_ms = LISTEN.b_listen_ms + (LISTEN.b_started !== null ? (t - LISTEN.b_started) : 0);
+    return {
+      a_listen_ms: Math.max(0, Math.round(a_ms)),
+      b_listen_ms: Math.max(0, Math.round(b_ms)),
+      a_play_count: Math.max(0, LISTEN.a_play_count|0),
+      b_play_count: Math.max(0, LISTEN.b_play_count|0),
+    };
+  }
+
+  function updateVoteGate(){
+    const ok = !!STATE && !STATE.finished && LISTEN.a_play_count > 0 && LISTEN.b_play_count > 0;
+    voteA.disabled = !ok;
+    voteB.disabled = !ok;
+  }
+
   function setEnabled(on){
-    [playA, playB, skipA, skipB, voteA, voteB].forEach(b => b.disabled = !on);
+    [playA, playB, skipA, skipB].forEach(b => b.disabled = !on);
+    if(!on){
+      voteA.disabled = true;
+      voteB.disabled = true;
+    }else{
+      updateVoteGate();
+    }
   }
 
   function pauseBoth(){
+    stopSide("A");
+    stopSide("B");
     try{ audioA.pause(); }catch(e){}
     try{ audioB.pause(); }catch(e){}
     playA.textContent = "▶ Play A";
@@ -935,6 +1013,7 @@ def _html() -> str:
 
   function updateUI(st){
     STATE = st;
+    resetListen();
 
     if(st.message){
       err.textContent = st.message;
@@ -999,9 +1078,18 @@ def _html() -> str:
     }
     if(audioEl.paused){
       pauseBoth();
-      audioEl.play();
+      if(label === "A"){
+        LISTEN.a_play_count += 1;
+        LISTEN.a_started = nowMs();
+      }else{
+        LISTEN.b_play_count += 1;
+        LISTEN.b_started = nowMs();
+      }
+      updateVoteGate();
+      audioEl.play().catch(e => { err.textContent = "Play error: " + e.message; });
       btn.textContent = "⏸ Pause " + label;
     }else{
+      if(label === "A"){ stopSide("A"); }else{ stopSide("B"); }
       audioEl.pause();
       btn.textContent = "▶ Play " + label;
     }
@@ -1010,8 +1098,11 @@ def _html() -> str:
   playA.addEventListener("click", () => togglePlay(audioA, playA, "A"));
   playB.addEventListener("click", () => togglePlay(audioB, playB, "B"));
 
-  audioA.addEventListener("ended", () => { playA.textContent = "▶ Play A"; });
-  audioB.addEventListener("ended", () => { playB.textContent = "▶ Play B"; });
+  audioA.addEventListener("pause", () => { stopSide("A"); });
+  audioB.addEventListener("pause", () => { stopSide("B"); });
+
+  audioA.addEventListener("ended", () => { stopSide("A"); playA.textContent = "▶ Play A"; });
+  audioB.addEventListener("ended", () => { stopSide("B"); playB.textContent = "▶ Play B"; });
 
   async function api(path, opts){
     const res = await fetch(path, Object.assign({ headers: { "Content-Type":"application/json" } }, opts || {}));
@@ -1047,7 +1138,7 @@ def _html() -> str:
   async function doSkip(side){
     try{
       pauseBoth();
-      const st = await api("/api/skip", { method:"POST", body: JSON.stringify({ session_id: STATE.session_id, side }) });
+      const st = await api("/api/skip", { method:"POST", body: JSON.stringify(Object.assign({ session_id: STATE.session_id, side }, listenPayload())) });
       updateUI(st);
     }catch(e){
       err.textContent = "Error: " + e.message;
@@ -1057,7 +1148,7 @@ def _html() -> str:
   async function doVote(winner){
     try{
       pauseBoth();
-      const st = await api("/api/vote", { method:"POST", body: JSON.stringify({ session_id: STATE.session_id, winner }) });
+      const st = await api("/api/vote", { method:"POST", body: JSON.stringify(Object.assign({ session_id: STATE.session_id, winner }, listenPayload())) });
       updateUI(st);
     }catch(e){
       err.textContent = "Error: " + e.message;
@@ -1097,6 +1188,13 @@ DB = _db_connect(SETTINGS.db_path)
 _db_init(DB)
 
 app = FastAPI()
+mimetypes.add_type("audio/mpeg", ".mp3")
+mimetypes.add_type("audio/mp4", ".m4a")
+mimetypes.add_type("audio/wav", ".wav")
+
+app.mount("/chunks", StaticFiles(directory=str(Path(SETTINGS.chunks_local_root).resolve())), name="chunks")
+
+MIN_LISTEN_MS = int(os.getenv("MTURK_PREF_MIN_LISTEN_MS", "0") or "0")
 
 
 @app.get("/healthz", response_class=PlainTextResponse)
@@ -1273,6 +1371,11 @@ def api_skip(req: SkipReq) -> JSONResponse:
 
     st, local_index, msg0 = _repair_state(slot, local_index, st)
 
+    a_listen_ms = int(getattr(req, "a_listen_ms", 0) or 0)
+    b_listen_ms = int(getattr(req, "b_listen_ms", 0) or 0)
+    a_play_count = int(getattr(req, "a_play_count", 0) or 0)
+    b_play_count = int(getattr(req, "b_play_count", 0) or 0)
+
     if votes_done >= required_votes:
         payload = _payload(
             SETTINGS,
@@ -1345,6 +1448,10 @@ def api_skip(req: SkipReq) -> JSONResponse:
             len(b_list),
             0,
             reason,
+            a_listen_ms,
+            b_listen_ms,
+            a_play_count,
+            b_play_count,
         )
 
         st, local_index = _advance(slot, local_index)
@@ -1382,6 +1489,15 @@ def api_vote(req: VoteReq) -> JSONResponse:
     session_id, slot, required_votes, votes_done, presented, local_index, st, csvp, worker_id, assignment_id, hit_id, turk_submit_to = _load_session(session_id)
 
     st, local_index, msg0 = _repair_state(slot, local_index, st)
+
+    a_listen_ms = int(getattr(req, "a_listen_ms", 0) or 0)
+    b_listen_ms = int(getattr(req, "b_listen_ms", 0) or 0)
+    a_play_count = int(getattr(req, "a_play_count", 0) or 0)
+    b_play_count = int(getattr(req, "b_play_count", 0) or 0)
+    if a_play_count < 1 or b_play_count < 1:
+        raise HTTPException(400, "must press play on both A and B before voting")
+    if MIN_LISTEN_MS > 0 and (a_listen_ms < MIN_LISTEN_MS or b_listen_ms < MIN_LISTEN_MS):
+        raise HTTPException(400, f"must listen at least {MIN_LISTEN_MS}ms on both A and B before voting")
 
     if votes_done >= required_votes:
         payload = _payload(
@@ -1426,6 +1542,10 @@ def api_vote(req: VoteReq) -> JSONResponse:
         len(b_list),
         winner,
         "0",
+        a_listen_ms,
+        b_listen_ms,
+        a_play_count,
+        b_play_count,
     )
 
     finished = votes_done >= required_votes
