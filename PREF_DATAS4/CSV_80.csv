@@ -1,0 +1,16 @@
+a_file,a_chunk_idx,a_chunk_total,b_file,b_chunk_idx,b_chunk_total,winner,replacement,a_listen_ms,b_listen_ms,a_play_count,b_play_count
+sample185_0ea0912d,1,3,sample125_1b5a54f4,2,12,2,0,2568,15635,1,1
+sample194_328dbd2a,1,12,sample057_29b21bea,1,3,2,0,15594,15634,1,1
+sample092_7e1324ef,1,3,sample201_5430f370,1,3,2,0,15609,15631,1,1
+sample210_ac1f93e1,2,11,sample048_e4494277,2,12,1,0,1464,1944,1,1
+sample069_5cae6d79,1,3,sample123_fc41e8f2,1,12,1,0,6559,6952,2,1
+sample089_101bfe11,2,12,sample014_ac17730c,2,6,1,0,1376,928,1,1
+sample152_2c7a9e21,1,3,sample244_f01a5078,1,6,2,0,2408,3080,1,1
+sample110_8e91af50,1,7,sample215_cc025b5e,1,12,2,0,15639,15627,1,1
+sample115_2bd91ef1,1,12,sample124_3f5d1a8c,1,12,1,0,16479,15550,1,1
+sample083_f5ef4dc7,1,12,sample027_cd0faf20,1,12,1,0,17300,15613,2,1
+sample212_4d3716b5,1,12,sample151_0c634082,1,3,2,0,15593,15620,1,1
+sample243_1ced9527,1,8,sample154_f1fb8e99,1,3,1,0,21345,17866,4,3
+sample081_44c869d5,1,12,sample233_4e88157a,1,3,1,0,15565,15582,1,1
+sample229_f92eb5b1,2,12,sample097_0a02c41a,2,3,1,0,2744,2576,2,1
+sample203_3b23436c,1,4,sample139_6badff7b,1,12,2,0,17551,17129,2,2
